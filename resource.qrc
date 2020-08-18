@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>resources/textAboutthis.html</file>
+        <file>resources/stylesheet.css</file>
     </qresource>
 </RCC>

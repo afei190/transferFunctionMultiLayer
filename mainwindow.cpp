@@ -52,7 +52,7 @@ MainWindow::MainWindow(QWidget *parent)
     // set range for spin boxes
     ui->shearWaveVelocityDoubleSpinBox->setRange(10, 1000);
     ui->dampingDoubleSpinBox->setRange(0,30);
-    ui->thicknessDoubleSpinBox->setRange(0.5,20.0);
+    ui->thicknessDoubleSpinBox->setRange(0.5,100.0);
     ui->densityDoubleSpinBox->setRange(0.1,5.0);
 
     // initialize transfer function plot
