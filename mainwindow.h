@@ -40,7 +40,12 @@ private slots:
 
     void on_dampingDoubleSpinBox_valueChanged(double arg1);
 
-    void on_densitydoubleSpinBox_valueChanged(double arg1);
+    void on_densityDoubleSpinBox_valueChanged(double arg1);
+
+    void createActions();
+    void about();
+    void version();
+    void copyright();
 
 private:
     Ui::MainWindow *ui;

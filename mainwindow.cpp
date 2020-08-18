@@ -6,11 +6,17 @@
 #include <QDebug>
 #include <QVector>
 #include <QGridLayout>
-#include <qwt_picker.h>
-#include <qwt_plot_picker.h>
-#include <qwt_picker_machine.h>
-#include <qwt_plot_shapeitem.h>
-#include <qwt_plot_curve.h>
+#include <QModelIndex>
+#include <QMessageBox>
+#include <QGuiApplication>
+#include <QScreen>
+
+#include "Utils/dialogabout.h"
+#include "qwt_picker.h"
+#include "qwt_plot_picker.h"
+#include "qwt_picker_machine.h"
+#include "qwt_plot_shapeitem.h"
+#include "qwt_plot_curve.h"
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -18,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     // set up plot for layers
     plot = new QwtPlot(this);
     QGridLayout *plotLayout = new QGridLayout(this);
@@ -42,10 +49,13 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->tableView->m_sqlModel, SIGNAL(dataChanged(const QModelIndex&,const QModelIndex&)), this, SLOT(onTableViewUpdated()));
     connect(ui->tableView, SIGNAL(cellClicked(const QModelIndex&)), this, SLOT(setActiveLayer(const QModelIndex&)));
 
-    ui->shearWaveVelocityDoubleSpinBox->setRange(10, 500);
+    // set range for spin boxes
+    ui->shearWaveVelocityDoubleSpinBox->setRange(10, 1000);
     ui->dampingDoubleSpinBox->setRange(0,30);
     ui->thicknessDoubleSpinBox->setRange(0.5,20.0);
+    ui->densityDoubleSpinBox->setRange(0.1,5.0);
 
+    // initialize transfer function plot
     ui->TransferFunctionFig->showAxisControls(false);
     ui->TransferFunctionFig->setXLabel("Freq. [Hz]");
     ui->TransferFunctionFig->setYLabel("[H]");
@@ -62,6 +72,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->densityDoubleSpinBox->setValue(ui->tableView->m_sqlModel->getDensity(m_activeLayer-1));
     ui->thicknessDoubleSpinBox->setValue(ui->tableView->m_sqlModel->getThickness(m_activeLayer-1));
 
+    createActions();
     plotLayers();
     updateSoilTF();
     updatePlots();
@@ -252,11 +263,11 @@ void MainWindow::on_dampingDoubleSpinBox_valueChanged(double arg1)
 }
 
 
-void MainWindow::on_densitydoubleSpinBox_valueChanged(double arg1)
+void MainWindow::on_densityDoubleSpinBox_valueChanged(double arg1)
 {
     if (ui->tableView->m_sqlModel->rowCount() >= m_activeLayer) {
         ui->tableView->m_sqlModel->editData(m_activeLayer - 1, DENSITY, arg1);
-        ui->tableView->update();
+        // ui->tableView->update();
     }
 }
 
@@ -274,6 +285,8 @@ void MainWindow::setActiveLayer(const QModelIndex &index)
 void MainWindow::setActiveLayer(int index)
 {
     m_activeLayer = index;
+    // QModelIndex qindex = ui->tableView->model()->index(m_activeLayer - 1, 0);
+    emit ui->tableView->onCellSingleClicked(ui->tableView->model()->index(m_activeLayer - 1, 0));
     ui->activeLayerlineEdit->setText(QString::number(m_activeLayer));
     ui->shearWaveVelocityDoubleSpinBox->setValue(ui->tableView->m_sqlModel->getVS(m_activeLayer-1));
     ui->densityDoubleSpinBox->setValue(ui->tableView->m_sqlModel->getDensity(m_activeLayer-1));
@@ -281,6 +294,7 @@ void MainWindow::setActiveLayer(int index)
     ui->thicknessDoubleSpinBox->setValue(ui->tableView->m_sqlModel->getThickness(m_activeLayer-1));
 }
 
+// The following part of code is modified from PGT
 void MainWindow::plotLayers()
 {
     foreach (PLOTOBJECT item, plotItemList) {
@@ -327,9 +341,10 @@ void MainWindow::plotLayers()
 void MainWindow::on_picker_appended (const QPoint &pos)
 {
     PLOTOBJECT    obj = itemAt(pos);
-    setActiveLayer(obj.index);
-    ui->tableView->m_sqlModel->setActive(obj.index-1);
-    // plotLayers();
+    if (obj.index >= 1) {
+        setActiveLayer(obj.index);
+        ui->tableView->m_sqlModel->setActive(obj.index-1);
+    }
 }
 
 
@@ -422,4 +437,120 @@ PLOTOBJECT MainWindow::itemAt( const QPoint& pos ) const
     }
 
     return emptyObj;
+}
+
+
+void MainWindow::version()
+{
+    QString versionText("Version 0.9");
+    QMessageBox msgBox;
+    QSpacerItem *theSpacer = new QSpacerItem(700, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+    msgBox.setText(versionText);
+    QGridLayout *layout = (QGridLayout*)msgBox.layout();
+    layout->addItem(theSpacer, layout->rowCount(),0,1,layout->columnCount());
+    msgBox.exec();
+}
+
+void MainWindow::about()
+{
+    DialogAbout *dlg = new DialogAbout();
+    QString aboutTitle("A SimCenter Tool for Calculating Transfer Function of Multiple Layers");
+    QString aboutSource = ":/resources/textAboutthis.html";
+    dlg->setTitle(aboutTitle);
+    dlg->setTextSource(aboutSource);
+
+    //
+    // adjust size of application window to the available display
+    //
+
+    QRect rec = QGuiApplication::primaryScreen()->geometry();
+    int height = 0.50*rec.height();
+    int width  = 0.50*rec.width();
+    dlg->resize(width, height);
+
+    dlg->exec();
+    delete dlg;
+    /*
+    QString aboutText("A SimCenter Tool For Transfer Function Calculation");
+    QMessageBox msgBox;
+    QSpacerItem *theSpacer = new QSpacerItem(700, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+    msgBox.setText(aboutText);
+    QGridLayout *layout = (QGridLayout*)msgBox.layout();
+    layout->addItem(theSpacer, layout->rowCount(),0,1,layout->columnCount());
+    msgBox.exec(); */
+}
+
+void MainWindow::copyright()
+{
+    QMessageBox msgBox;
+    QString copyrightText = QString("\
+                                    <p>\
+                                    The source code is licensed under a BSD 2-Clause License:<p>\
+                                    \"Copyright (c) 2017-2019, The Regents of the University of California (Regents).\"\
+                                    All rights reserved.<p>\
+                                    <p>\
+                                    Redistribution and use in source and binary forms, with or without \
+                                    modification, are permitted provided that the following conditions are met:\
+                                    <p>\
+                                    1. Redistributions of source code must retain the above copyright notice, this\
+                                    list of conditions and the following disclaimer.\
+                                    \
+                                    \
+                                    2. Redistributions in binary form must reproduce the above copyright notice,\
+                                    this list of conditions and the following disclaimer in the documentation\
+                                    and/or other materials provided with the distribution.\
+                                    <p>\
+                                    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND\
+                                    ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\
+                                    WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\
+                                    DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR\
+                                    ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\
+                                    (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\
+                                    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND\
+            ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\
+            (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS\
+            SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\
+            <p>\
+            The views and conclusions contained in the software and documentation are those\
+            of the authors and should not be interpreted as representing official policies,\
+            either expressed or implied, of the FreeBSD Project.\
+            <p>\
+            REGENTS SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMITED TO, \
+            THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.\
+            THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS \
+            PROVIDED \"AS IS\". REGENTS HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT,\
+            UPDATES, ENHANCEMENTS, OR MODIFICATIONS.\
+            <p>\
+            ------------------------------------------------------------------------------------\
+            <p>\
+            The compiled binary form of this application is licensed under a GPL Version 3 license.\
+            The licenses are as published by the Free Software Foundation and appearing in the LICENSE file\
+            included in the packaging of this application. \
+            <p>\
+            ------------------------------------------------------------------------------------\
+            <p>\
+            This software makes use of the QT packages (unmodified): core, gui, widgets and network\
+                                                                     <p>\
+                                                                     QT is copyright \"The Qt Company Ltd&quot; and licensed under the GNU Lesser General \
+                                                                     Public License (version 3) which references the GNU General Public License (version 3)\
+      <p>\
+      The licenses are as published by the Free Software Foundation and appearing in the LICENSE file\
+      included in the packaging of this application. \
+      <p>\
+      ");
+
+    QSpacerItem *theSpacer = new QSpacerItem(700, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+    msgBox.setText(copyrightText);
+    QGridLayout *layout = (QGridLayout*)msgBox.layout();
+    layout->addItem(theSpacer, layout->rowCount(),0,1,layout->columnCount());
+    msgBox.exec();
+
+}
+
+
+void MainWindow::createActions() {
+    QMenu *helpMenu = menuBar()->addMenu(tr("&Help"));
+    QAction *versionAct = helpMenu->addAction(tr("&Version"), this, &MainWindow::version);
+    QAction *aboutAct = helpMenu->addAction(tr("&About"), this, &MainWindow::about);
+    QAction *copyrightAct = helpMenu->addAction(tr("&License"), this, &MainWindow::copyright);
 }
