@@ -188,7 +188,7 @@ void MainWindow::updateSoilTF()
     rhoVec.append(QString::number(DefaultDensity));
 
     if (numLayers == 0)
-      return;
+        return;
 
     for(int i = 0; i<numLayers-1; i++){
         Psi = dampingVec[i].toDouble() /100.0;
@@ -293,7 +293,7 @@ void MainWindow::plotLayers()
     //
     plot->detachItems();
     double currentBase = 0;
-    for (int iLayer=1; iLayer <= ui->tableView->m_sqlModel->rowCount(); iLayer++) {
+    for (int iLayer = ui->tableView->m_sqlModel->rowCount(); iLayer >= 1; iLayer--) {
         QPolygonF groundCorners;
         groundCorners << QPointF(0, currentBase)
                       << QPointF(1, currentBase)
@@ -319,17 +319,17 @@ void MainWindow::plotLayers()
         var.index   = iLayer;
         plotItemList.append(var);
     }
-    plot->setAxisScale(QwtPlot::yLeft, 0, currentBase, 0.5);
+    plot->setAxisScale(QwtPlot::yLeft, 0, currentBase);
     plot->replot();
 }
 
 
 void MainWindow::on_picker_appended (const QPoint &pos)
 {
-   PLOTOBJECT    obj = itemAt(pos);
-   setActiveLayer(obj.index);
-   ui->tableView->m_sqlModel->setActive(obj.index-1);
-   // plotLayers();
+    PLOTOBJECT    obj = itemAt(pos);
+    setActiveLayer(obj.index);
+    ui->tableView->m_sqlModel->setActive(obj.index-1);
+    // plotLayers();
 }
 
 
@@ -348,12 +348,6 @@ PLOTOBJECT MainWindow::itemAt( const QPoint& pos ) const
     coords[ QwtPlot::xTop ]    = plot->canvasMap( QwtPlot::xTop ).invTransform( pos.x() );
     coords[ QwtPlot::yLeft ]   = plot->canvasMap( QwtPlot::yLeft ).invTransform( pos.y() );
     coords[ QwtPlot::yRight ]  = plot->canvasMap( QwtPlot::yRight ).invTransform( pos.y() );
-
-    //qDebug() << "Pos: " << pos
-    //         << " coord: " << coords[ QwtPlot::xBottom ]
-    //         << "/" << coords[ QwtPlot::xTop ]
-    //         << "/" << coords[ QwtPlot::yLeft ]
-    //         << "/" << coords[ QwtPlot::yRight ];
 
     for ( int i = plotItemList.size() - 1; i >= 0; i-- )
     {
