@@ -36,7 +36,13 @@ MainWindow::MainWindow(QWidget *parent)
     plot->setAxisScale(QwtPlot::xBottom, 0, 1, 1);
     plot->setAxisScale(QwtPlot::yLeft, 0, DefaultThickness, 0.5);
     plot->enableAxis(QwtPlot::xBottom, false);
-    plot->setAxisTitle(QwtPlot::yLeft, "Thickness (m)");
+
+    QwtText text;
+    text.setText("Thickness (m)");
+    QFont font;
+    font.setPointSize(10);
+    text.setFont(font);
+    plot->setAxisTitle(QwtPlot::yLeft, text);
 
     //Picker
     QwtPicker *picker = new QwtPicker(plot->canvas());
@@ -67,11 +73,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tableView->setTotalHeight(3);
     ui->totalLayerLineEdit->setText("1");
     ui->activeLayerlineEdit->setText(QString::number(m_activeLayer));
-    ui->shearWaveVelocityDoubleSpinBox->setValue(ui->tableView->m_sqlModel->getVS(m_activeLayer-1));
-    ui->dampingDoubleSpinBox->setValue(ui->tableView->m_sqlModel->getESize(m_activeLayer-1));
-    ui->densityDoubleSpinBox->setValue(ui->tableView->m_sqlModel->getDensity(m_activeLayer-1));
-    ui->thicknessDoubleSpinBox->setValue(ui->tableView->m_sqlModel->getThickness(m_activeLayer-1));
 
+    updateSpinBox();
     createActions();
     plotLayers();
     updateSoilTF();
@@ -116,9 +119,18 @@ void MainWindow::updateLayerID()
 void MainWindow::onTableViewUpdated()
 {
     ui->totalHeight->setText(QString::number(ui->tableView->totalHeight()));
+    updateSpinBox();
     plotLayers();
     updateSoilTF();
     updatePlots();
+}
+
+void MainWindow::updateSpinBox()
+{
+    ui->shearWaveVelocityDoubleSpinBox->setValue(ui->tableView->m_sqlModel->getVS(m_activeLayer-1));
+    ui->densityDoubleSpinBox->setValue(ui->tableView->m_sqlModel->getDensity(m_activeLayer-1));
+    ui->dampingDoubleSpinBox->setValue(ui->tableView->m_sqlModel->getESize(m_activeLayer-1));
+    ui->thicknessDoubleSpinBox->setValue(ui->tableView->m_sqlModel->getThickness(m_activeLayer-1));
 }
 
 void MainWindow::updatePlots()
@@ -127,7 +139,6 @@ void MainWindow::updatePlots()
     ui->TransferFunctionFig->plot(m_freq, m_soilTF, SimFigure::LineType::Solid, Qt::blue);
     ui->TransferFunctionFig->setLabelFontSize(8);
     ui->TransferFunctionFig->setXLim(0, 40.0);
-
 }
 
 // Following codes are adopted from work by Pedro Arduino and Alborz Ghorfrani of University of Washington
@@ -276,10 +287,7 @@ void MainWindow::setActiveLayer(const QModelIndex &index)
 {
     m_activeLayer = index.row() + 1;
     ui->activeLayerlineEdit->setText(QString::number(m_activeLayer));
-    ui->shearWaveVelocityDoubleSpinBox->setValue(ui->tableView->m_sqlModel->getVS(m_activeLayer-1));
-    ui->densityDoubleSpinBox->setValue(ui->tableView->m_sqlModel->getDensity(m_activeLayer-1));
-    ui->dampingDoubleSpinBox->setValue(ui->tableView->m_sqlModel->getESize(m_activeLayer-1));
-    ui->thicknessDoubleSpinBox->setValue(ui->tableView->m_sqlModel->getThickness(m_activeLayer-1));
+    updateSpinBox();
 }
 
 void MainWindow::setActiveLayer(int index)
@@ -288,10 +296,7 @@ void MainWindow::setActiveLayer(int index)
     // QModelIndex qindex = ui->tableView->model()->index(m_activeLayer - 1, 0);
     emit ui->tableView->onCellSingleClicked(ui->tableView->model()->index(m_activeLayer - 1, 0));
     ui->activeLayerlineEdit->setText(QString::number(m_activeLayer));
-    ui->shearWaveVelocityDoubleSpinBox->setValue(ui->tableView->m_sqlModel->getVS(m_activeLayer-1));
-    ui->densityDoubleSpinBox->setValue(ui->tableView->m_sqlModel->getDensity(m_activeLayer-1));
-    ui->dampingDoubleSpinBox->setValue(ui->tableView->m_sqlModel->getESize(m_activeLayer-1));
-    ui->thicknessDoubleSpinBox->setValue(ui->tableView->m_sqlModel->getThickness(m_activeLayer-1));
+    updateSpinBox();
 }
 
 // The following part of code is modified from PGT

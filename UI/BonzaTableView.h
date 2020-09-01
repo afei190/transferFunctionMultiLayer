@@ -115,8 +115,7 @@ public slots:
     void removeOneRow(int row);
     void removeOnPage();
 
-
-
+    void resizeEvent(QResizeEvent *event);
     void divideByLayers(double, int);
 
 

@@ -50,7 +50,7 @@ BonzaTableView::BonzaTableView(QWidget *parent) :
     this->verticalHeader()->hide();
 
     this->setColumnHidden(1,true);
-
+    this->horizontalHeader()->setStretchLastSection(true);
 
     //this->setItemDelegate(new TableViewItemDelegate(this));
     this->setItemDelegateForColumn(MATERIAL,new MatItemDelegate(this));
@@ -750,4 +750,12 @@ void BonzaTableView::setGWT(double GWT)
 {
     m_nGWT = GWT;
     emit gwtChanged(m_nGWT);
+}
+
+void BonzaTableView::resizeEvent(QResizeEvent *event) {
+    this->setColumnWidth(0, this->width()/5);
+    this->setColumnWidth(1, this->width()/5);
+    this->setColumnWidth(2, this->width()/5);
+    this->setColumnWidth(3, this->width()/5);
+    this->setColumnWidth(4, this->width()/5);
 }

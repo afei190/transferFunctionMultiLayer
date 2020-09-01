@@ -32,6 +32,7 @@ private slots:
     void updateLayerID();
     void setActiveLayer(const QModelIndex &index);
     void setActiveLayer(int index);
+    void updateSpinBox();
     void on_picker_appended(const QPoint &pos);
 
     void on_thicknessDoubleSpinBox_valueChanged(double arg1);

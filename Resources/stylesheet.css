@@ -90,6 +90,20 @@ QGroupBox{
     background-color: white;
 }
 
+BonzaTableView
+{
+    selection-background-color: #f2ffcc;
+    /*gridline-color: green;*/
+    selection-color: black;
+    border: 1px solid black;
 
+}
+
+
+BonzaTableView::item:hover
+{
+    background-color: #ccff33;
+
+}
 
 
